@@ -10,7 +10,7 @@ import (
         "github.com/gin-gonic/gin"
 
         
-        "github.com/go-sql-driver/mysql"
+        _ "github.com/lib/pq"
         
 )
 var db *sql.DB
@@ -25,19 +25,19 @@ type Album struct {
 
 func main() {
         // Capture connection properties.
-        cfg := mysql.Config{
-                User:   os.Getenv("DBUSER"),
-                Passwd: os.Getenv("DBPASS"),
-                Net:    "tcp",
-                Addr:   "127.0.0.1:3306",
-                DBName: "recordings",
-        }
+        username := os.Getenv("DBUSER")
+        password := os.Getenv("DBPASS")
+        album := os.Getenv("ALBUM")
+
+        connStr := fmt.Sprintf("user=%s name=%s password=%s sslmode=disable", username, album, password)
+
         // Get a database handle.
         var err error
-        db, err = sql.Open("mysql", cfg.FormatDSN())
+        db, err = sql.Open("postgres", connStr)
         if err != nil {
                 log.Fatal(err)
         }
+        //defer db.Close()
 
         pingErr := db.Ping()
         if pingErr != nil {
@@ -45,14 +45,12 @@ func main() {
         }
         fmt.Println("Connected!")
 
-       
-
 // TODO: move to functions
         router := gin.Default()
         router.GET("/albums", getAlbum)
         router.GET("/albums/:id", getAlbumByID)
         router.POST("/albums", addAlbum)
-        router.Run("localhost:8080")
+        router.Run("0.0.0.0:8080")
 
 
 }
@@ -63,9 +61,10 @@ func getAlbum(c *gin.Context) {
         // An albums slice to hold data from returned rows.
         var albums []Album
     
-        rows, err := db.Query("SELECT * FROM album")
+        rows, err := db.Query("SELECT * FROM yourmom")
         if err != nil {
              c.IndentedJSON(http.StatusBadRequest, err)
+             return;
         }
         defer rows.Close()
         // Loop through rows, using Scan to assign column data to struct fields.
@@ -116,11 +115,16 @@ func albumsByArtist(c *gin.Context) {
 
 func addAlbum(c *gin.Context) {
         var newAlbum Album
+        
 
         if err := c.BindJSON(&newAlbum); err != nil {
                 return
         }
-        newAlbum.ID , _ = addAlbumQuery(newAlbum)
+        var err error
+        newAlbum.ID , err = addAlbumQuery(newAlbum)
+        if err != nil {
+                fmt.Println(err)
+        }
         c.IndentedJSON(http.StatusCreated, newAlbum)
 
 }
@@ -135,7 +139,7 @@ func albumsByArtistQuery(name string) ([]Album, error) {
         // An albums slice to hold data from returned rows.
         var albums []Album
     
-        rows, err := db.Query("SELECT * FROM album WHERE artist = ?", name)
+        rows, err := db.Query("SELECT * FROM yourmom WHERE artist = ?", name)
         if err != nil {
             return nil, fmt.Errorf("albumsByArtist %q: %v", name, err)
         }
@@ -159,7 +163,7 @@ func albumByIDQuery(id int64) (Album, error) {
     // An album to hold data from the returned row.
     var alb Album
 
-    row := db.QueryRow("SELECT * FROM album WHERE id = ?", id)
+    row := db.QueryRow("SELECT * FROM yourmom WHERE id = ?", id)
     // Declaring err variable, and if statement in 1 line
     if err := row.Scan(&alb.ID, &alb.Title, &alb.Artist, &alb.Price); err != nil {
         if err == sql.ErrNoRows {
@@ -173,13 +177,12 @@ func albumByIDQuery(id int64) (Album, error) {
 // addAlbum adds the specified album to the database,
 // returning the album ID of the new entry
 func addAlbumQuery(alb Album) (int64, error) {
-        result, err := db.Exec("INSERT INTO album (title, artist, price) VALUES (?, ?, ?)", alb.Title, alb.Artist, alb.Price)
+        var id int64
+        err := db.QueryRow(`INSERT INTO yourmom (title, price, artist) VALUES ($1, $2, $3) RETURNING id`, alb.Title, alb.Price, alb.Artist).Scan(&id)
         if err != nil {
-            return 0, fmt.Errorf("addAlbum: %v", err)
+                fmt.Print(err)
+            return -1, fmt.Errorf("addAlbum: %v", err)
         }
-        id, err := result.LastInsertId()
-        if err != nil {
-            return 0, fmt.Errorf("addAlbum: %v", err)
-        }
+        
         return id, nil
     }
