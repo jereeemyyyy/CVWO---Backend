@@ -29,7 +29,7 @@ func main() {
         password := os.Getenv("DBPASS")
         album := os.Getenv("ALBUM")
 
-        connStr := fmt.Sprintf("user=%s name=%s password=%s sslmode=disable", username, album, password)
+        connStr := fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", username, album, password)
 
         // Get a database handle.
         var err error
