@@ -25,11 +25,13 @@ type Album struct {
 
 func main() {
         // Capture connection properties.
-        username := os.Getenv("DBUSER")
-        password := os.Getenv("DBPASS")
-        album := os.Getenv("ALBUM")
+        // username := os.Getenv("DBUSER")
+        // password := os.Getenv("DBPASS")
+        // album := os.Getenv("ALBUM")
+        // connStr := fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", username, album, password)
 
-        connStr := fmt.Sprintf("user=%s dbname=%s password=%s sslmode=disable", username, album, password)
+        connstr := fmt.Sprintf("user=album_lsio_user dbname=album_lsio password=SRBn2Lo0NGLoDS37C5I8AGkmsxbypjmm sslmode=disable")
+
 
         // Get a database handle.
         var err error
