@@ -37,6 +37,6 @@ func main() {
         router.DELETE("deletecomment/:comment_id", handlers.AuthMiddleware(), handlers.DeleteComment)
         router.GET("/getcommentsbypostid/:post_id", handlers.GetCommentsByPostID)
 
-	router.Run("0.0.0.0:8081")
+	router.Run("0.0.0.0:80")
 
 }
