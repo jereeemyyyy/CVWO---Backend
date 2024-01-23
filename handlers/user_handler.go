@@ -148,7 +148,7 @@ func AuthMiddleware() gin.HandlerFunc {
 }
 
 
-//GetUserProfile (Test this)
+//GetUserProfile 
 func GetUserProfile(c *gin.Context) {
 	// Extract claims from the context using AuthMiddleware
 	claims, ok := c.Get("claims")
