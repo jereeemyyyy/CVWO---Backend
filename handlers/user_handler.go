@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"database/sql"
-	_"fmt"
+	"fmt"
 	"net/http"
 	_"os"
 	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -73,7 +74,7 @@ func Login(c *gin.Context) {
 	err := row.Scan(&storedUser.UserID, &storedUser.Username, &storedUser.Password_hash)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user"})
@@ -83,6 +84,7 @@ func Login(c *gin.Context) {
 	// Compare the hashed password from the database with the provided password
 	err = bcrypt.CompareHashAndPassword([]byte(storedUser.Password_hash), []byte(inputUser.Password_hash))
 	if err != nil {
+		fmt.Println(err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
@@ -125,10 +127,19 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		const bearerPrefix = "Bearer "
+		if strings.HasPrefix(tokenString, bearerPrefix) {
+			tokenString = strings.TrimPrefix(tokenString, bearerPrefix)
+		}
+
+
 		// Parse the token
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 			return secretKey, nil
 		})
+		
+		fmt.Println("Received token %s", tokenString)
+
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()

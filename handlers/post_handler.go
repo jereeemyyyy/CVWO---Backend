@@ -22,6 +22,16 @@ type Post struct {
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }
 
+type Post_updated struct {
+	PostID    int       `db:"post_id" json:"post_id"`
+	Title     string    `db:"title" json:"title"`
+	Content   string    `db:"content" json:"content"`
+	UserID    int       `db:"user_id" json:"user_id"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	Username  string 	`db:"username" json:"username"`
+}
+
+
 // Create a new post
 func CreatePost(c *gin.Context) {
 	var post Post
@@ -76,9 +86,9 @@ func GetPostByID(c *gin.Context) {
 
 // Get all posts
 func GetAllPosts(c *gin.Context) {
-	var posts []Post
+	var posts []Post_updated
 
-	rows, err := database.DB.Query("SELECT * FROM posts")
+	rows, err := database.DB.Query("SELECT posts.*, users.username FROM posts INNER JOIN users ON posts.user_id = users.user_id")
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts"})
@@ -87,8 +97,8 @@ func GetAllPosts(c *gin.Context) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var post Post
-		err := rows.Scan(&post.PostID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt)
+		var post Post_updated
+		err := rows.Scan(&post.PostID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt, &post.Username)
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts"})
@@ -103,6 +113,7 @@ func GetAllPosts(c *gin.Context) {
 		return
 	}
 
+	log.Println(posts)
 	c.JSON(http.StatusOK, posts)
 }
 

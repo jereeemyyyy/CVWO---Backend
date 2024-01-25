@@ -16,6 +16,15 @@ type Comment struct {
 	CreatedAt      time.Time `json:"created_at"`
 }
 
+type Comment_updated struct {
+	CommentID     int       `json:"comment_id"`
+	CommentContent string    `json:"comment_content"`
+	UserID        int       `json:"user_id"`
+	Username      string    `json:"username"`
+	PostID        int       `json:"post_id"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
 // Adds a new comment to a post
 func CreateComment(c *gin.Context) {
 	var comment Comment
@@ -95,17 +104,23 @@ func GetCommentsByPostID(c *gin.Context) {
 		return
 	}
 
-	rows, err := database.DB.Query("SELECT comment_id, comment_content, user_id, post_id, created_at FROM comment WHERE post_id = $1", postID)
+	// Use a JOIN query to fetch comments with usernames
+	rows, err := database.DB.Query(`
+		SELECT c.comment_id, c.comment_content, c.user_id, u.username, c.post_id, c.created_at 
+		FROM comment c
+		JOIN users u ON c.user_id = u.user_id
+		WHERE c.post_id = $1
+	`, postID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	defer rows.Close()
 
-	var comments []Comment
+	var comments []Comment_updated
 	for rows.Next() {
-		var comment Comment
-		err := rows.Scan(&comment.CommentID, &comment.CommentContent, &comment.UserID, &comment.PostID, &comment.CreatedAt)
+		var comment Comment_updated
+		err := rows.Scan(&comment.CommentID, &comment.CommentContent, &comment.UserID, &comment.Username, &comment.PostID, &comment.CreatedAt)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
