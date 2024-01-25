@@ -44,7 +44,7 @@ func main() {
 
         // Like Handlers
         router.POST("/likes", handlers.AuthMiddleware(), handlers.CreateLike)
-        router.DELETE("deletelike", handlers.AuthMiddleware(), handlers.DeleteLike)
+        router.DELETE("likes", handlers.AuthMiddleware(), handlers.DeleteLike)
         router.GET("likecount/:post_id", handlers.CountLikesByPostID)
 
         // Comment Handlers

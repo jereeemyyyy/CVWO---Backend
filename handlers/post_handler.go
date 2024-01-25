@@ -29,6 +29,7 @@ type Post_updated struct {
 	UserID    int       `db:"user_id" json:"user_id"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	Username  string 	`db:"username" json:"username"`
+	Comment_count int `db:"comment_count" json:"comment_count"`
 }
 
 
@@ -88,7 +89,14 @@ func GetPostByID(c *gin.Context) {
 func GetAllPosts(c *gin.Context) {
 	var posts []Post_updated
 
-	rows, err := database.DB.Query("SELECT posts.*, users.username FROM posts INNER JOIN users ON posts.user_id = users.user_id")
+	rows, err := database.DB.Query(`
+		SELECT posts.*, users.username, COUNT(comment.comment_id) AS comment_count
+		FROM posts
+		INNER JOIN users ON posts.user_id = users.user_id
+		LEFT JOIN comment ON posts.post_id = comment.post_id
+		GROUP BY posts.post_id, users.user_id
+		ORDER BY posts.post_id
+	`)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts"})
@@ -98,7 +106,7 @@ func GetAllPosts(c *gin.Context) {
 
 	for rows.Next() {
 		var post Post_updated
-		err := rows.Scan(&post.PostID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt, &post.Username)
+		err := rows.Scan(&post.PostID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt, &post.Username, &post.Comment_count)
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts"})

@@ -49,20 +49,6 @@ func CreateLike(c *gin.Context) {
 
 // Deletes a like by like_id
 func DeleteLike(c *gin.Context) {
-	// likeID, err := strconv.Atoi(c.Param("id"))
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid like ID"})
-	// 	return
-	// }
-	
-
-	// // Perform the delete operation in the database
-	// _, err = database.DB.Exec("DELETE FROM likes WHERE like_id = $1", likeID)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
 	var like Like
 	if err := c.ShouldBindJSON(&like); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
