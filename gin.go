@@ -15,7 +15,7 @@ func main() {
 
         // Apply CORS middleware
         config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"} // Replace with your frontend URL
+	config.AllowOrigins = []string{"https://65b285142dd73700089ac5e8--remarkable-paletas-b17b0b.netlify.app"} // Replace with your frontend URL
         config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
         config.AllowHeaders = []string{"Authorization", "Content-Type"}
 	router.Use(cors.New(config))
