@@ -49,14 +49,38 @@ func CreateLike(c *gin.Context) {
 
 // Deletes a like by like_id
 func DeleteLike(c *gin.Context) {
-	likeID, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid like ID"})
+	// likeID, err := strconv.Atoi(c.Param("id"))
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid like ID"})
+	// 	return
+	// }
+	
+
+	// // Perform the delete operation in the database
+	// _, err = database.DB.Exec("DELETE FROM likes WHERE like_id = $1", likeID)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	var like Like
+	if err := c.ShouldBindJSON(&like); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Perform the delete operation in the database
-	_, err = database.DB.Exec("DELETE FROM likes WHERE like_id = $1", likeID)
+	// Check if the referenced post_id and user_id exist in their respective tables
+	if !recordExists(c, "posts", "post_id", like.PostID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post_id"})
+		return
+	}
+
+	if !recordExists(c, "users", "user_id", like.UserID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user_id"})
+		return
+	}
+
+	_, err := database.DB.Exec("DELETE FROM likes WHERE post_id = $1 AND user_id = $2", like.PostID, like.UserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
